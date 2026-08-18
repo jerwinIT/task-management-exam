@@ -28,8 +28,8 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
     try {
       setError(null);
       await onUpdate(task.id, { completed: !task.completed });
-    } catch {
-      setError("Failed to update task.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update task.");
     }
   }
 
@@ -39,7 +39,7 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
     setIsEditing(true);
     setError(null);
   }
-
+  //
   async function handleSaveEdit() {
     const trimmedTitle = editTitle.trim();
     if (!trimmedTitle) {
@@ -54,8 +54,8 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
         description: editDescription.trim() || undefined,
       });
       setIsEditing(false);
-    } catch {
-      setError("Failed to save changes.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save changes.");
     } finally {
       setIsSaving(false);
     }
@@ -66,8 +66,8 @@ export function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
     setError(null);
     try {
       await onDelete(task.id);
-    } catch {
-      setError("Failed to delete task.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete task.");
       setIsDeleting(false);
     }
   }

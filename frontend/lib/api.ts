@@ -18,14 +18,24 @@ export interface GetTasksParams {
   status?: "all" | "completed" | "incomplete";
 }
 
-// helper so every function doesnt repeat the same error logic
-async function handleResponse<T>(response: Response): Promise<T> {
+// throws a clean Error using the backend's message, no body parsing assumed
+async function throwIfError(response: Response): Promise<void> {
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(
-      `API error ${response.status}: ${errorBody || response.statusText}`,
-    );
+    let message = errorBody || response.statusText;
+    try {
+      const parsed = JSON.parse(errorBody);
+      if (parsed?.message) message = parsed.message;
+    } catch {
+      // body wasn't JSON, fall back to raw text
+    }
+    throw new Error(message);
   }
+}
+
+// helper so every function doesnt repeat the same error logic
+async function handleResponse<T>(response: Response): Promise<T> {
+  await throwIfError(response);
   return response.json();
 }
 
@@ -71,10 +81,5 @@ export async function deleteTask(id: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
     method: "DELETE",
   });
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(
-      `API error ${response.status}: ${errorBody || response.statusText}`,
-    );
-  }
+  await throwIfError(response);
 }
