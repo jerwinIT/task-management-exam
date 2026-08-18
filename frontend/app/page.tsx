@@ -2,8 +2,18 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Task } from "@/types/task";
-import { getTasks, createTask, CreateTaskInput } from "@/lib/api";
+import {
+  getTasks,
+  createTask,
+  CreateTaskInput,
+  updateTask,
+  deleteTask,
+  UpdateTaskInput,
+} from "@/lib/api";
 import { TaskForm } from "@/components/TaskForm";
+import { TaskList } from "@/components/TaskList";
+import { SearchBar } from "@/components/SearchBar";
+import { TaskFilters } from "@/components/TaskFilters";
 
 export default function TaskManagementPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -36,25 +46,33 @@ export default function TaskManagementPage() {
     const newTask = await createTask(input);
     setTasks((prev) => [newTask, ...prev]);
   }
+  async function handleUpdateTask(id: string, input: UpdateTaskInput) {
+    const updated = await updateTask(id, input);
+    setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
+  }
+
+  async function handleDeleteTask(id: string) {
+    await deleteTask(id);
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  }
 
   return (
-    <main className="max-w-2xl mx-auto p-6 space-y-6">
+    <main className="max-w-2xl mx-auto p-6 space-y-6 w-full min-w-0 overflow-x-hidden">
       <h1 className="text-2xl font-semibold">Task Manager</h1>
-
       <TaskForm onSubmit={handleCreateTask} />
-
-      {/* TODO: SearchBar goes here — controls `search` via setSearch */}
-      {/* TODO: TaskFilters goes here — controls `status` via setStatus */}
-
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <SearchBar value={search} onChange={setSearch} />
+        <TaskFilters value={status} onChange={setStatus} />
+      </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
-
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading tasks...</p>
       ) : (
-        <p className="text-sm text-muted-foreground">
-          {tasks.length} task(s) — TaskList component goes here
-        </p>
-        // TODO: <TaskList tasks={tasks} onTasksChange={setTasks} />
+        <TaskList
+          tasks={tasks}
+          onUpdate={handleUpdateTask}
+          onDelete={handleDeleteTask}
+        />
       )}
     </main>
   );
